@@ -20,35 +20,36 @@ Deno.serve(async (req) => {
       //   );
       // }
 
-      let endTime = Date.now();
-      let end = new Date(endTime);
-      let endTimeIso = end.toISOString();
+      // let endTime = Date.now();
+      // let end = new Date(endTime);
+      // let endTimeIso = end.toISOString();
 
-      const startTime = new Date(endTime - 10 * 60000);
-      const startTimeIso = startTime.toISOString();
+      // const startTime = new Date(endTime - 10 * 60000);
+      // const startTimeIso = startTime.toISOString();
 
-      console.log("endTime", endTimeIso);
-      console.log("startTime", startTimeIso);
+      // console.log("endTime", endTimeIso);
+      // console.log("startTime", startTimeIso);
 
       // Fetch chats data within the time range
       const { data: chats, error } = await supabase
         .from("chats")
-        .select("chat_text, tag, summary, mood")
-        .gte("timestamp", startTimeIso)
-        .lte("timestamp", endTimeIso);
+        .select("thread_id, summary")
+        .order('timestamp', {ascending: false})
+        .limit(70)
 
       if (error) {
         throw error;
       }
 
-      console.log("chats", chats);
-
       // Prepare the data for analysis
       const prompt = generateTopIssuesPrompt(chats);
       const response = await getAIResponse(prompt);
 
+      let trimmed = response.choices[0].message.content.replaceAll('```json', '');
+      trimmed = trimmed.replaceAll('`', '');
+
       // Parse the response to get the structured data
-      const topIssues = JSON.parse(response.choices[0].message.content);
+      const topIssues = JSON.parse(trimmed);
 
       return new Response(
         JSON.stringify({ top_issues: topIssues }),
@@ -76,15 +77,15 @@ async function getAIResponse(prompt: string): Promise<any> {
       "Authorization": `Bearer ${Deno.env.get("OPENAI_API_TOKEN")}`,
     },
     body: JSON.stringify({
-      model: "gpt-4",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "user",
           content: prompt,
         },
       ],
-      temperature: 0.3,
-      max_tokens: 500,
+      temperature: 0.5,
+      max_tokens: 1000,
     }),
   });
 
@@ -95,37 +96,109 @@ async function getAIResponse(prompt: string): Promise<any> {
 function generateTopIssuesPrompt(chats: any[]): string {
   // Convert chats data to a more readable format for the prompt
   const chatsSummary = chats.map((chat) => ({
-    text: chat.chat_text,
-    tag: chat.tag,
+    chat_id: chat.thread_id,
+    // text: chat.chat_text,
+    // tag: chat.tag,
     summary: chat.summary,
-    mood: chat.mood,
+    // mood: chat.mood,
   }));
 
-  const prompt =
-    `As an experienced Customer Service Analytics Expert, analyze the following customer service data and identify the top issues.
-  Please provide a comprehensive analysis of the most common issues, their frequency, and any notable patterns.
+  // const prompt =
+  //   `As an experienced Customer Service Analytics Expert, analyze the following customer service data and identify the top issues.
+  // Please provide a comprehensive analysis of the most common issues, their frequency, and any notable patterns.
 
-  Customer Service Data:
-  ${JSON.stringify(chatsSummary, null, 2)}
+  // Customer Service Data:
+  // ${JSON.stringify(chatsSummary, null, 2)}
 
-  Please provide your response in the following JSON format:
-  {
-    "top_issues": [
-      {
-        "issue": "string",
-        "count": number,
-        "percentage": number,
-        "common_themes": ["string"],
-        "severity_level": "HIGH|MEDIUM|LOW"
+  // Please provide your response in the following JSON format:
+  // {
+  //   "top_issues": [
+  //     {
+  //       "issue": "string",
+  //       "count": number,
+  //       "percentage": number,
+  //       "common_themes": ["string"],
+  //       "severity_level": "HIGH|MEDIUM|LOW"
+  //     }
+  //   ],
+  //   "total_conversations": number,
+  //   "period_summary": "string"
+  // }
+
+  // Focus on identifying patterns and grouping similar issues together.
+  // Calculate percentages based on the total number of conversations.
+  // Assign severity levels based on issue impact and frequency.
+  // No explanation, just json content.`;
+
+  const prompt = 
+  `Please analyze each summary row in the provided data set. Pay special attention to the following topics, as they are of higher importance:
+    MT5 withdrawal
+    Withdrawal issues
+    Uncredited deposits
+    Cashier down
+    MT5 is down
+
+    Data to analyze: ${JSON.stringify(chatsSummary, null, 2)}
+
+    At the end of your analysis, identify and highlight the top 5 most common issues, prioritizing the topics listed above. For each highlighted issue, provide the following in JSON format, no additional explanation:
+    {
+      "Issue 1": {
+        "Description": "<Description of the issue>",
+        "Count": <Total number of times the issue appears>,
+        "ChatIDs": [<List of relevant chat IDs>]
+      },
+      "Issue 2": {
+        "Description": "<Description of the issue>",
+        "Count": <Total number of times the issue appears>,
+        "ChatIDs": [<List of relevant chat IDs>]
+      },
+      "Issue 3": {
+        "Description": "<Description of the issue>",
+        "Count": <Total number of times the issue appears>,
+        "ChatIDs": [<List of relevant chat IDs>]
+      },
+      "Issue 4": {
+        "Description": "<Description of the issue>",
+        "Count": <Total number of times the issue appears>,
+        "ChatIDs": [<List of relevant chat IDs>]
+      },
+      "Issue 5": {
+        "Description": "<Description of the issue>",
+        "Count": <Total number of times the issue appears>,
+        "ChatIDs": [<List of relevant chat IDs>]
       }
-    ],
-    "total_conversations": number,
-    "period_summary": "string"
-  }
+    }
+    Example Output in JSON format:
+    {
+      "Issue 1": {
+        "Description": "Withdrawal issues",
+        "Count": 25,
+        "ChatIDs": [12345, 67890, 23456]
+      },
+      "Issue 2": {
+        "Description": "MT5 is down",
+        "Count": 18,
+        "ChatIDs": [34567, 89012, 45678]
+      },
+      "Issue 3": {
+        "Description": "Uncredited deposits",
+        "Count": 15,
+        "ChatIDs": [56789, 90123, 67890]
+      },
+      "Issue 4": {
+        "Description": "Cashier down",
+        "Count": 12,
+        "ChatIDs": [78901, 23456, 89012]
+      },
+      "Issue 5": {
+        "Description": "MT5 withdrawal",
+        "Count": 10,
+        "ChatIDs": [90123, 34567, 12345]
+      }
+    }
 
-  Focus on identifying patterns and grouping similar issues together.
-  Calculate percentages based on the total number of conversations.
-  Assign severity levels based on issue impact and frequency.`;
+    Strictly provide the response as a valid json, without any additional text.
+  `
 
   return prompt;
 }
