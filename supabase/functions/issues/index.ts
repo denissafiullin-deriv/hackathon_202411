@@ -55,23 +55,23 @@ Deno.serve(async (req) => {
     },
   ];
 
-  if (req.method === "GET") {
-    const url = new URL(req.url);
-    if (url.pathname === "/issues/1") {
-      return new Response(
-        JSON.stringify(issue1),
-        { headers: { "Content-Type": "application/json" } },
-      );
-    } else if (url.pathname === "/issues") {
-      const { data, error } = await supabase
-        .from('chats')
-        .select('thread_id, summary')
-      return new Response(
-        JSON.stringify(issues),
-        { headers: { "Content-Type": "application/json" } },
-      );
-    } else 
-  }
+  // if (req.method === "GET") {
+  //   const url = new URL(req.url);
+  //   if (url.pathname === "/issues/1") {
+  //     return new Response(
+  //       JSON.stringify(issue1),
+  //       { headers: { "Content-Type": "application/json" } },
+  //     );
+  //   } else if (url.pathname === "/issues") {
+  //     const { data, error } = await supabase
+  //       .from('chats')
+  //       .select('thread_id, summary')
+  //     return new Response(
+  //       JSON.stringify(issues),
+  //       { headers: { "Content-Type": "application/json" } },
+  //     );
+  //   } else 
+  // }
 });
 
 

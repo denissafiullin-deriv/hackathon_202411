@@ -75,6 +75,26 @@ Deno.serve(async (req) => {
         { headers: { "Content-Type": "application/json" }, status: 500 },
       );
     }
+  } else if (req.method === "GET") {
+    try {
+      const url = new URL(req.url);
+      const queryParams = url.searchParams;
+      const threadString = queryParams.get('ChatIDs');
+      const threadIds = threadString?.split(',');
+      const { data } = await supabase
+        .from('chats')
+        .select('thread_id, summary')
+        .in('thread_id', threadIds);
+      return new Response(
+        JSON.stringify(data),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    } catch (error) {
+      return new Response(
+        JSON.stringify({error: error.message}),
+        { headers: { "Content-Type": "application/json" } },
+      );
+    }
   }
 });
 

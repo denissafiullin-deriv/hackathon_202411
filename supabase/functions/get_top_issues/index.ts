@@ -10,32 +10,13 @@ Deno.serve(async (req) => {
   if (req.method === "GET") {
     try {
       const url = new URL(req.url);
-      // const startTime = url.searchParams.get("start_time");
-      // const endTime = url.searchParams.get("end_time");
-
-      // if (!startTime || !endTime) {
-      //   return new Response(
-      //     JSON.stringify({ error: "start_time and end_time parameters are required" }),
-      //     { headers: { "Content-Type": "application/json" }, status: 400 },
-      //   );
-      // }
-
-      // let endTime = Date.now();
-      // let end = new Date(endTime);
-      // let endTimeIso = end.toISOString();
-
-      // const startTime = new Date(endTime - 10 * 60000);
-      // const startTimeIso = startTime.toISOString();
-
-      // console.log("endTime", endTimeIso);
-      // console.log("startTime", startTimeIso);
 
       // Fetch chats data within the time range
       const { data: chats, error } = await supabase
         .from("chats")
         .select("thread_id, summary")
         .order('timestamp', {ascending: false})
-        .limit(70)
+        .limit(100)
 
       if (error) {
         throw error;
@@ -84,7 +65,7 @@ async function getAIResponse(prompt: string): Promise<any> {
           content: prompt,
         },
       ],
-      temperature: 0.5,
+      temperature: 0.1,
       max_tokens: 1000,
     }),
   });
@@ -103,35 +84,8 @@ function generateTopIssuesPrompt(chats: any[]): string {
     // mood: chat.mood,
   }));
 
-  // const prompt =
-  //   `As an experienced Customer Service Analytics Expert, analyze the following customer service data and identify the top issues.
-  // Please provide a comprehensive analysis of the most common issues, their frequency, and any notable patterns.
-
-  // Customer Service Data:
-  // ${JSON.stringify(chatsSummary, null, 2)}
-
-  // Please provide your response in the following JSON format:
-  // {
-  //   "top_issues": [
-  //     {
-  //       "issue": "string",
-  //       "count": number,
-  //       "percentage": number,
-  //       "common_themes": ["string"],
-  //       "severity_level": "HIGH|MEDIUM|LOW"
-  //     }
-  //   ],
-  //   "total_conversations": number,
-  //   "period_summary": "string"
-  // }
-
-  // Focus on identifying patterns and grouping similar issues together.
-  // Calculate percentages based on the total number of conversations.
-  // Assign severity levels based on issue impact and frequency.
-  // No explanation, just json content.`;
-
   const prompt = 
-  `Please analyze each summary row in the provided data set. Pay special attention to the following topics, as they are of higher importance:
+  `Analyze each summary row in the provided data set. Pay special attention to the following topics, as they are of higher importance:
     MT5 withdrawal
     Withdrawal issues
     Uncredited deposits
