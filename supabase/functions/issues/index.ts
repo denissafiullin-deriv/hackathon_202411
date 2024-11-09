@@ -4,16 +4,22 @@
 
 // Setup type definitions for built-in Supabase Runtime APIs
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "npm:@supabase/supabase-js";
+
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL") ?? "",
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+);
 
 Deno.serve(async (req) => {
   const issues = [
     {
-      description: "Issue 11 summary",
+      description: "Issue 1 summary",
       rating: 100,
       link: "https://omsjtoedisfhmbyuiguf.supabase.co/issues/1",
     },
     {
-      description: "Issue 22 summary",
+      description: "Issue 2 summary",
       rating: 80,
       link: "https://omsjtoedisfhmbyuiguf.supabase.co/issues/2",
     },
@@ -57,16 +63,14 @@ Deno.serve(async (req) => {
         { headers: { "Content-Type": "application/json" } },
       );
     } else if (url.pathname === "/issues") {
+      const { data, error } = await supabase
+        .from('chats')
+        .select('thread_id, summary')
       return new Response(
         JSON.stringify(issues),
         { headers: { "Content-Type": "application/json" } },
       );
-    } else {
-      return new Response(
-        JSON.stringify(issue1),
-        { headers: { "Content-Type": "application/json" } },
-      );
-    }
+    } else 
   }
 });
 

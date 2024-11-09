@@ -166,7 +166,7 @@ function tagPrompt(chatText: string): string {
   Conversation to analyze:
   ${chatText}
   Also analyze the mood of the conversation and mark it one of the following: Happy, Unhappy, Neutral.
-  Provide the response as a json with keys, without any additional text:
+  Provide the response as a json with the following keys, without any additional text:
   Team:
   Main Issue:
   Tag:
