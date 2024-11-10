@@ -9,7 +9,32 @@ const supabase = createClient(
 Deno.serve(async (req) => {
   if (req.method === "GET") {
     try {
-      const url = new URL(req.url);
+      // Fetch mood data from DB
+      const { data: mood } = await supabase
+        .from("chats")
+        .select("mood")
+        .order("timestamp", { ascending: false })
+        .limit(100);
+
+      console.log("mood data from DB", mood);
+
+      interface MoodEntry {
+        mood: string;
+      }
+
+      const countMoods = (data: MoodEntry[]): { [key: string]: number } => {
+        const counts: { [key: string]: number } = {};
+
+        data.forEach((entry) => {
+          counts[entry.mood] = (counts[entry.mood] || 0) + 1;
+        });
+
+        return counts;
+      };
+
+      const result = countMoods(mood);
+
+      console.log(result);
 
       // Generate random mood data
       const happy = Math.floor(Math.random() * (90 - 80 + 1)) + 80;
